@@ -1,52 +1,54 @@
-export const FIBONACCI = Object.freeze([1, 2, 3, 5, 8, 13, 21, 34, 55]);
-export const VOLUME = Object.freeze([0.5, 1, 2, 4, 8]);
-export const COMPLEXITY = Object.freeze([1, 1.25, 1.5, 2, 3]);
-export const RISK = Object.freeze([1, 1.1, 1.25, 1.5, 2]);
+// Three-point PERT effort estimate, as described by PMI:
+// https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222
+// The conversion to SP is this project's convention, not part of PERT.
 export const HOURS_PER_SP = 8;
-export const DEFAULTS = Object.freeze({m: 3, v: 3, c: 2, r: 2, sp: null});
+export const MAX_HOURS = 100000;
+export const DEFAULTS = Object.freeze({m: 4, o: null, l: null, p: null, legacy: false});
+export const PERT_WEIGHTS = Object.freeze({optimistic: 1, likely: 4, pessimistic: 1});
+const keys = ['o', 'l', 'p'];
 
-const LEGACY_VOLUME = Object.freeze([1, 2, 3, 5, 8]);
-
-function level(value) {
-  return Number.isInteger(value) && value >= 1 && value <= 5;
+export function parseHours(raw) {
+  if (typeof raw !== 'string' && typeof raw !== 'number') return null;
+  const text = String(raw).trim();
+  if (!/^(?:\d+(?:[.,]\d{0,2})?|[.,]\d{1,2})$/.test(text)) return null;
+  const value = Number(text.replace(',', '.'));
+  return Number.isFinite(value) && value >= 0.01 && value <= MAX_HOURS ? value : null;
 }
 
-export function parsePoints(raw) {
-  if (typeof raw !== 'string' && typeof raw !== 'number') return null;
-  const value = String(raw).trim();
-  if (!/^(?:\d+(?:[.,]\d{1,2})?|[.,]\d{1,2})$/.test(value)) return null;
-  const points = Number(value.replace(',', '.'));
-  return Number.isFinite(points) && points >= 0.01 && points <= 1000 ? points : null;
+function isHours(value) {
+  return typeof value === 'number' && parseHours(value) === value;
+}
+
+export function validateScenarios(state) {
+  const errors = {};
+  for (const key of keys) {
+    if (!isHours(state?.[key])) errors[key] = 'Укажите от 0,01 до 100 000 часов, до двух знаков после запятой.';
+  }
+  if (!errors.o && !errors.l && state.o > state.l) {
+    errors.l = 'Наиболее вероятная оценка должна быть не меньше оптимистичной.';
+  }
+  if (isHours(state?.l) && !errors.p && state.l > state.p) {
+    errors.p = 'Пессимистичная оценка должна быть не меньше наиболее вероятной.';
+  } else if (isHours(state?.o) && !errors.p && state.o > state.p) {
+    errors.p = 'Пессимистичная оценка должна быть не меньше оптимистичной.';
+  }
+  return {valid: Object.keys(errors).length === 0, errors};
 }
 
 export function estimate(state) {
-  if (!state || ![state.v, state.c, state.r].every(level)) {
-    throw new RangeError('Оценки должны быть целыми числами от 1 до 5');
-  }
-  const method = state.m ?? 3;
-  if (method !== 2 && method !== 3) throw new RangeError('Неизвестная версия расчёта');
-  const legacy = method === 2;
-  const manual = state.sp !== null && state.sp !== undefined;
-  if (manual && (legacy || typeof state.sp !== 'number' || parsePoints(state.sp) === null)) {
-    throw new RangeError('SP должны быть числом от 0,01 до 1000, не более двух знаков после запятой');
-  }
-
-  const volume = (legacy ? LEGACY_VOLUME : VOLUME)[state.v - 1];
-  // Integer arithmetic keeps an exact tenth from gaining an extra tenth due
-  // to floating-point rounding. All coefficients have at most two decimals.
-  const numerator = volume * 2 * Math.round(COMPLEXITY[state.c - 1] * 100) * Math.round(RISK[state.r - 1] * 100);
-  const score = numerator / 20000;
-  const suggestedSp = legacy
-    ? FIBONACCI.find(point => point >= score - 1e-9)
-    : Math.ceil(numerator / 2000) / 10;
-  if (suggestedSp === undefined) throw new RangeError('Оценка выходит за шкалу');
-  const sp = manual ? state.sp : suggestedSp;
+  const validation = validateScenarios(state);
+  if (!validation.valid) throw new RangeError(Object.values(validation.errors).join(' '));
+  // Inputs have at most two decimals. Weighted cents avoid introducing extra
+  // input rounding; do not round the PERT result before converting to SP.
+  const weightedCents = Math.round(state.o * 100)
+    + PERT_WEIGHTS.likely * Math.round(state.l * 100)
+    + Math.round(state.p * 100);
   return {
-    score, suggestedSp, sp,
-    hours: Math.round(sp * HOURS_PER_SP * 100) / 100,
-    manual, legacy,
-    split: sp >= 13,
-    investigate: state.r >= 4,
+    hours: weightedCents / 600,
+    sp: weightedCents / (600 * HOURS_PER_SP),
+    optimistic: state.o,
+    likely: state.l,
+    pessimistic: state.p,
   };
 }
 
@@ -55,19 +57,13 @@ export function parseState(hash) {
   if (typeof hash !== 'string') return state;
   const params = new URLSearchParams(hash.replace(/^#/, ''));
   const method = params.get('m');
-  if (method !== '2' && method !== '3') return state;
-  state.m = Number(method);
-  for (const key of ['v', 'c', 'r']) {
-    const raw = params.get(key);
-    if (/^[1-5]$/.test(raw ?? '')) state[key] = Number(raw);
-  }
-  if (state.m === 3) state.sp = parsePoints(params.get('sp'));
+  if (method === '2' || method === '3') return {...state, legacy: true};
+  if (method !== '4') return state;
+  for (const key of keys) state[key] = parseHours(params.get(key));
   return state;
 }
 
 export function serializeState(state) {
   estimate(state);
-  const params = new URLSearchParams({m: state.m ?? 3, v: state.v, c: state.c, r: state.r});
-  if (state.sp !== null && state.sp !== undefined) params.set('sp', String(state.sp));
-  return params.toString();
+  return new URLSearchParams({m: 4, o: state.o, l: state.l, p: state.p}).toString();
 }

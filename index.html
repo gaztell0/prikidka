@@ -4,101 +4,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f8fa">
-  <meta name="description" content="Три оценки — объём, сложность и риски. Калькулятор Story Points и плановых часов по правилу проекта: 1 SP = 8 человеко-часов.">
-  <title>Прикидка — оценка задач в SP и часах</title>
+  <meta name="description" content="Оценка трудозатрат по PERT: оптимистичный, наиболее вероятный и пессимистичный сценарии. Результат в часах и SP по правилу проекта: 1 SP = 8 человеко-часов.">
+  <title>Прикидка — PERT в SP и часах</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%234859e8'/%3E%3Cpath d='M16 45V30m16 15V20m16 25V13' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
   <script type="module" src="./app.js"></script>
 </head>
 <body>
   <header class="header shell">
-    <a class="brand" href="./" aria-label="Прикидка — на главную">
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>прикидка<span class="brand-dot">.</span>
-    </a>
+    <a class="brand" href="./" aria-label="Прикидка — на главную"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>прикидка<span class="brand-dot">.</span></a>
     <nav aria-label="Навигация"><a href="#method">Как считаем <span aria-hidden="true">↗</span></a></nav>
   </header>
-
   <main class="shell">
     <div class="workspace">
       <section class="assessment" aria-labelledby="assessment-heading">
         <div class="section-heading"><h1 id="assessment-heading">Оценка задачи</h1><button id="reset" class="text-button" type="button"><span aria-hidden="true">↺</span> Сбросить</button></div>
+        <p class="assessment-intro">Три сценария в человеко-часах. Оцените всю работу в каждом.</p>
+        <p id="legacy-note" class="legacy-note" hidden>В ссылке указаны оценки по прежним шкалам. Их нельзя автоматически перевести в PERT — заполните три сценария заново.</p>
 
-        <fieldset class="factor" data-factor="v">
-          <legend class="sr-only">Объём работы</legend>
-          <div class="factor-heading"><span class="factor-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg></span><div><h3>Объём</h3><p>Сколько работы предстоит сделать?</p></div><span class="factor-count">01</span></div>
-          <div class="segments" role="radiogroup" aria-label="Объём работы">
-            <label><input type="radio" name="v" value="1"><span><b>1</b><small>Минимальный</small></span></label>
-            <label><input type="radio" name="v" value="2"><span><b>2</b><small>Небольшой</small></span></label>
-            <label><input type="radio" name="v" value="3" checked><span><b>3</b><small>Средний</small></span></label>
-            <label><input type="radio" name="v" value="4"><span><b>4</b><small>Большой</small></span></label>
-            <label><input type="radio" name="v" value="5"><span><b>5</b><small>Очень большой</small></span></label>
-          </div>
-          <p id="v-hint" class="factor-hint">Несколько связанных изменений в одном сценарии.</p>
-        </fieldset>
-
-        <fieldset class="factor" data-factor="c">
-          <legend class="sr-only">Сложность решения</legend>
-          <div class="factor-heading"><span class="factor-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 5-6 7 6 7m8-14 6 7-6 7m-3-16-2 18"/></svg></span><div><h3>Сложность</h3><p>Насколько трудно найти и реализовать решение?</p></div><span class="factor-count">02</span></div>
-          <div class="segments" role="radiogroup" aria-label="Сложность решения">
-            <label><input type="radio" name="c" value="1"><span><b>1</b><small>Типовая</small></span></label>
-            <label><input type="radio" name="c" value="2" checked><span><b>2</b><small>Простая</small></span></label>
-            <label><input type="radio" name="c" value="3"><span><b>3</b><small>Умеренная</small></span></label>
-            <label><input type="radio" name="c" value="4"><span><b>4</b><small>Высокая</small></span></label>
-            <label><input type="radio" name="c" value="5"><span><b>5</b><small>Очень высокая</small></span></label>
-          </div>
-          <p id="c-hint" class="factor-hint">Подход понятен, потребуется немного адаптации.</p>
-        </fieldset>
-
-        <fieldset class="factor" data-factor="r">
-          <legend class="sr-only">Риски и неизвестность</legend>
-          <div class="factor-heading"><span class="factor-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7l-9-4Z"/><path d="M12 8v5m0 3h.01"/></svg></span><div><h3>Риски</h3><p>Сколько неизвестного может повлиять на работу?</p></div><span class="factor-count">03</span></div>
-          <div class="segments" role="radiogroup" aria-label="Риски и неизвестность">
-            <label><input type="radio" name="r" value="1"><span><b>1</b><small>Минимальные</small></span></label>
-            <label><input type="radio" name="r" value="2" checked><span><b>2</b><small>Низкие</small></span></label>
-            <label><input type="radio" name="r" value="3"><span><b>3</b><small>Умеренные</small></span></label>
-            <label><input type="radio" name="r" value="4"><span><b>4</b><small>Высокие</small></span></label>
-            <label><input type="radio" name="r" value="5"><span><b>5</b><small>Критичные</small></span></label>
-          </div>
-          <p id="r-hint" class="factor-hint">Есть небольшие вопросы, существенных препятствий не ожидается.</p>
-        </fieldset>
-        <p class="scope-note"><span aria-hidden="true">ⓘ</span> Учитывайте всю работу: реализацию, проверку и ревью.</p>
+        <div class="scenario">
+          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">O</span><label for="optimistic">Оптимистичная</label><span class="scenario-count">01</span></div>
+          <p id="o-hint" class="scenario-hint">Всё идёт благоприятно: решение знакомо, препятствий почти нет. Реалистичный минимум полной работы.</p>
+          <div class="hours-field"><input id="optimistic" name="o" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 2" aria-describedby="o-hint o-error"><span aria-hidden="true">чел.-ч</span></div>
+          <p id="o-error" class="field-error" hidden></p>
+        </div>
+        <div class="scenario">
+          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">M</span><label for="likely">Наиболее вероятная</label><span class="scenario-count">02</span></div>
+          <p id="l-hint" class="scenario-hint">Обычный ход работы с учётом сложности и привычных затруднений. Самый вероятный полный объём трудозатрат.</p>
+          <div class="hours-field"><input id="likely" name="l" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 4" aria-describedby="l-hint l-error"><span aria-hidden="true">чел.-ч</span></div>
+          <p id="l-error" class="field-error" hidden></p>
+        </div>
+        <div class="scenario">
+          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">P</span><label for="pessimistic">Пессимистичная</label><span class="scenario-count">03</span></div>
+          <p id="p-hint" class="scenario-hint">Реалистичный неблагоприятный сценарий: риски, переделки и сложные проверки увеличивают полную работу.</p>
+          <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 10" aria-describedby="p-hint p-error"><span aria-hidden="true">чел.-ч</span></div>
+          <p id="p-error" class="field-error" hidden></p>
+        </div>
+        <p class="scope-note">Учитывайте реализацию, тестирование и ревью в каждом сценарии. O ≤ M ≤ P. Дробные часы можно вводить через запятую или точку.</p>
       </section>
 
       <aside class="result-column" aria-labelledby="result-heading">
         <section class="result-card">
-          <div class="result-top"><h2 id="result-heading">Предварительная оценка</h2></div>
+          <h2 id="result-heading">Ожидаемая оценка по PERT</h2>
           <div class="result-values" aria-live="polite" aria-atomic="true">
-            <p class="points"><span id="sp-value">2,8</span><span class="unit">SP</span></p>
-            <p id="result-caption" class="result-caption">Расчёт по трём параметрам · шаг 0,1 SP</p>
-            <div class="hours-result"><div><p class="hours-label">Плановые трудозатраты</p><p class="hours"><span id="hours-value">22,4</span><span> ч</span></p></div><span class="project-tag">1 SP = 8 ч</span></div>
-            <p id="result-note" class="result-note">2,8 SP × 8 = 22,4 человеко-часа. Пересчёт по правилу проекта, не календарный срок.</p>
+            <p class="points"><span id="sp-value">—</span><span class="unit">SP</span></p>
+            <p id="result-caption" class="result-caption">Заполните три сценария</p>
+            <div class="hours-result"><p class="hours-label">Ожидаемые трудозатраты</p><p class="hours"><span id="hours-value">—</span><span class="hours-unit"> чел.-ч</span></p></div>
+            <div id="scenario-range" class="scenario-range" hidden><span>Сценарии O — P</span><strong id="range-value"></strong></div>
+            <p id="result-note" class="result-note">Результат появится после ввода трёх корректных оценок.</p>
           </div>
-          <div id="advice" class="advice" hidden></div>
-          <p id="legacy-note" class="legacy-note" hidden>Открыта старая ссылка со шкалой Фибоначчи. Изменение параметров включит дробные SP.</p>
-          <details id="manual-points" class="manual-points">
-            <summary>Уточнить SP вручную <span aria-hidden="true">⌄</span></summary>
-            <div class="manual-content">
-              <label for="manual-sp">Итоговые Story Points</label>
-              <div class="manual-field"><input id="manual-sp" type="text" inputmode="decimal" autocomplete="off" placeholder="Например, 1,2" aria-describedby="points-hint points-error"><span>SP</span></div>
-              <div class="quick-points" role="group" aria-label="Быстрый выбор SP"><button type="button" data-points="0.5">0,5</button><button type="button" data-points="1.2">1,2</button><button type="button" data-points="1.5">1,5</button></div>
-              <p id="points-error" class="points-error" hidden>Введите число от 0,01 до 1000, до двух знаков после запятой.</p>
-              <p id="points-hint" class="points-hint">Ручное значение заменяет итог расчёта. Учтите в нём все работы и риски.</p>
-              <button id="use-calculated" type="button" class="use-calculated" hidden>Вернуться к расчёту по параметрам</button>
-            </div>
-          </details>
         </section>
-
-        <div class="project-rule"><span class="rule-symbol" aria-hidden="true">＝</span><div><strong>Правило вашего проекта</strong><p>1 SP = 8 человеко-часов.<br>Риски учитываются в SP, без надбавки к часам.</p></div></div>
+        <div class="project-rule"><span class="rule-symbol" aria-hidden="true">＝</span><div><strong>1 SP = 8 человеко-часов</strong><p>Правило вашего проекта. SP = часы / 8.<br>Дробные SP сохраняются.</p></div></div>
+        <p class="planning-note">Человеко-часы описывают трудозатраты. Календарный срок зависит также от ожиданий, зависимостей и доступности команды.</p>
       </aside>
     </div>
 
     <section class="method" id="method" aria-labelledby="method-heading">
-      <div class="method-heading"><h2 id="method-heading">Как считается оценка</h2><p>Коэффициенты — стартовая модель. Их стоит согласовать на знакомых команде задачах.</p></div>
-      <div class="method-steps"><article><span class="step-index">01 / STORY POINTS</span><h3>Объём × сложность × риски</h3><p id="sp-method-description">Объём задаёт базу, сложность и риски увеличивают её. Результат округляется вверх с шагом 0,1 SP.</p><div id="formula" class="formula">2 × 1,25 × 1,1 = 2,75 → <strong>2,8 SP</strong></div></article><article><span class="step-index">02 / ПРАВИЛО ПРОЕКТА</span><h3>Часы = SP × 8</h3><p>Часы — прямой пересчёт SP по принятому правилу. Риски уже учтены в SP: второй запас сверху не добавляется.</p><div id="hours-formula" class="formula">2,8 SP × 8 ч/SP = <strong>22,4 ч</strong></div></article></div>
-      <details class="coefficient-details"><summary>Все коэффициенты и ограничения <span aria-hidden="true">＋</span></summary><div class="coefficient-content"><div class="table-wrap"><table><caption>Значения для каждого уровня оценки</caption><thead><tr><th scope="col">Параметр</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th></tr></thead><tbody><tr><th scope="row">База объёма, SP</th><td data-volume="0">0,5</td><td data-volume="1">1</td><td data-volume="2">2</td><td data-volume="3">4</td><td data-volume="4">8</td></tr><tr><th scope="row">Множитель сложности</th><td>×1</td><td>×1,25</td><td>×1,5</td><td>×2</td><td>×3</td></tr><tr><th scope="row">Множитель риска</th><td>×1</td><td>×1,1</td><td>×1,25</td><td>×1,5</td><td>×2</td></tr></tbody></table></div><p>В этом проекте 1 SP = 8 человеко-часов. SP используются как условные единицы плановых трудозатрат, а часы показывают ту же оценку в другом масштабе. Это не два независимых прогноза. Фактические затраты могут отличаться; сопоставляйте план с результатом на завершённых задачах.</p><p>Человеко-часы не равны календарному сроку: ожидание, доступность людей и зависимости нужно учитывать при планировании отдельно. Риск учитывается один раз, внутри SP. После пересчёта в часы дополнительный процент не добавляется.</p><p>Дробные SP поддерживаются: 0,5 SP = 4 ч, 1,2 SP = 9,6 ч, 1,5 SP = 12 ч. Автоматический расчёт округляется вверх до десятых SP. При ручном уточнении можно указать до двух знаков после запятой; часы считаются строго ×8. Старые ссылки сохраняют прежнюю шкалу до изменения параметров.</p><p>При 13 SP и выше лучше разделить задачу. При риске 4–5 сначала полезно исследовать неизвестное. Коэффициенты модели следует согласовать на нескольких знакомых команде задачах.</p><p>В классическом подходе SP — относительная оценка: <a href="https://www.atlassian.com/agile/project-management/estimation" target="_blank" rel="noopener noreferrer">Atlassian: оценка в Story Points ↗</a>. Фиксированные 8 ч/SP — правило вашего проекта; коэффициенты выше — собственная стартовая модель калькулятора.</p></div></details>
+      <div class="method-heading"><h2 id="method-heading">Как считается оценка</h2><p>Трёхточечная оценка PERT с весами 1 : 4 : 1.</p></div>
+      <div class="method-steps">
+        <article><span class="step-index">01 / PERT</span><h3>Часы = (O + 4M + P) / 6</h3><p>Наиболее вероятный сценарий получает вес 4. Сложность и риски учитываются в самих сценариях.</p><div id="hours-formula" class="formula">Введите O, M и P для расчёта</div></article>
+        <article><span class="step-index">02 / ПРАВИЛО ПРОЕКТА</span><h3>SP = часы / 8</h3><p>Оба результата считаются без промежуточного округления. Дополнительный запас сверху не добавляется.</p><div id="sp-formula" class="formula">Результат PERT / 8</div></article>
+      </div>
+      <details class="method-details"><summary>Основание метода и ограничения <span aria-hidden="true">＋</span></summary><div class="method-content">
+        <p>Формула (O + 4M + P) / 6 опубликована в материале <a href="https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222" target="_blank" rel="noopener noreferrer">PMI о методах оценки проектов ↗</a>. Это известный способ объединить три экспертные оценки; точность зависит от обоснованности исходных сценариев.</p>
+        <p>O и P — границы выбранных сценариев, а не подтверждённый доверительный интервал. Калькулятор не присваивает результату вероятность выполнения и не рассчитывает дату завершения.</p>
+        <p>Фиксированные 8 человеко-часов за SP — договорённость вашего проекта. В <a href="https://agilealliance.org/glossary/points-estimates-in/" target="_blank" rel="noopener noreferrer">Agile Alliance ↗</a> SP описаны как относительная оценка. Деление на 8 не является частью PERT.</p>
+        <p>При совпадении сценариев: 4 ч → 0,5 SP; 9,6 ч → 1,2 SP; 12 ч → 1,5 SP. Знак ≈ появляется, если значение округлено для отображения. Для малых значений показывается больше знаков, чтобы результат не превращался в ноль.</p>
+        <p>Сопоставляйте оценки с фактическими трудозатратами завершённых задач и уточняйте сценарии команды. Такой подход к улучшению оценок описан в <a href="https://www.gao.gov/products/gao-20-195g" target="_blank" rel="noopener noreferrer">GAO Cost Estimating and Assessment Guide ↗</a>.</p>
+      </div></details>
     </section>
   </main>
-
   <noscript><div class="noscript">Для расчёта включите JavaScript в браузере.</div></noscript>
 </body>
 </html>

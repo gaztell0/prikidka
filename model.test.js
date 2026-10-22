@@ -1,100 +1,68 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULTS, FIBONACCI, VOLUME, estimate, parsePoints, parseState, serializeState} from './model.js';
+import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, validateScenarios, parseState, serializeState} from './model.js';
+const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-10, `${actual} ≠ ${expected}`);
 
-test('Automatic estimates start below 1 SP and round upward to tenths', () => {
-  assert.deepEqual(VOLUME, [0.5, 1, 2, 4, 8]);
-  assert.deepEqual([estimate({...DEFAULTS, v: 1, c: 1, r: 1}).sp, estimate(DEFAULTS).sp, estimate({...DEFAULTS, v: 5, c: 5, r: 5}).sp], [0.5, 2.8, 48]);
-  assert.equal(estimate(DEFAULTS).hours, 22.4);
-  assert.equal(estimate(DEFAULTS).manual, false);
-  assert.equal(estimate(DEFAULTS).legacy, false);
+test('Published PERT weighted mean and 8-hour project conversion', () => {
+  const result = estimate({o: 2, l: 4, p: 10});
+  near(result.hours, 28 / 6);
+  near(result.sp, 7 / 12);
+  near(result.sp * HOURS_PER_SP, result.hours);
+  // The most likely value has weight four; this is not an unweighted mean.
+  assert.notEqual(result.hours, (2 + 4 + 10) / 3);
 });
 
-test('All 125 automatic combinations are monotone and follow 8 person-hours per SP', () => {
-  for (let v = 1; v <= 5; v++) for (let c = 1; c <= 5; c++) for (let r = 1; r <= 5; r++) {
-    const state = {...DEFAULTS, v, c, r};
-    const result = estimate(state);
-    assert.ok(result.sp >= result.score - 1e-12);
-    assert.ok(result.sp - result.score < 0.1 + 1e-12);
-    assert.equal(result.sp, result.suggestedSp);
-    assert.equal(Math.round(result.sp * 10), result.sp * 10);
-    assert.equal(result.hours, Math.round(result.sp * 800) / 100);
-    for (const key of ['v', 'c', 'r']) if (state[key] < 5) {
-      const next = estimate({...state, [key]: state[key] + 1});
-      assert.ok(next.sp >= result.sp);
-      assert.ok(next.hours >= result.hours);
-    }
-  }
-});
-
-test('Exact tenth boundaries do not gain an extra tenth', () => {
-  assert.equal(estimate({...DEFAULTS, v: 2, c: 1, r: 2}).sp, 1.1);
-  assert.equal(estimate({...DEFAULTS, v: 1, c: 4, r: 2}).sp, 1.1);
-  assert.equal(estimate({...DEFAULTS, v: 3, c: 4, r: 2}).sp, 4.4);
-  assert.equal(estimate({...DEFAULTS, v: 1, c: 2, r: 1}).sp, 0.7);
-});
-
-test('Manual decimal SP convert exactly, retaining the suggested estimate', () => {
-  for (const [sp, hours] of [[0.5, 4], [1.2, 9.6], [1.5, 12], [0.01, 0.08], [1.23, 9.84], [1000, 8000]]) {
-    const result = estimate({...DEFAULTS, sp});
-    assert.equal(result.sp, sp);
+test('Equal scenarios preserve exact fractional SP from the project examples', () => {
+  for (const [hours, sp] of [[4, 0.5], [9.6, 1.2], [12, 1.5], [0.01, 0.00125], [MAX_HOURS, MAX_HOURS / 8]]) {
+    const result = estimate({o: hours, l: hours, p: hours});
     assert.equal(result.hours, hours);
-    assert.equal(result.suggestedSp, 2.8);
-    assert.equal(result.manual, true);
+    assert.equal(result.sp, sp);
   }
 });
 
-test('Point input accepts comma, dot and surrounding whitespace, and rejects malformed values', () => {
-  for (const [raw, points] of [[' 0,5 ', 0.5], ['1.20', 1.2], ['.5', 0.5], [',50', 0.5], ['1000.00', 1000], [1.5, 1.5]]) assert.equal(parsePoints(raw), points);
-  for (const raw of ['', ' ', '0', '0.00', '-1', '+1', '1e2', '1.234', '1.200', '1,2.3', '1 2', '1.', '1foo', 'NaN', 'Infinity', '1000.01', '0.001', NaN, Infinity, null, undefined, {}, true]) {
-    assert.equal(parsePoints(raw), null, String(raw));
+test('Ordered scenarios have a bounded, monotone mean without intermediate rounding', () => {
+  const values = [0.01, 0.1, 0.5, 1, 1.2, 4, 9.6, 12, 100, MAX_HOURS];
+  for (const o of values) for (const l of values) for (const p of values) {
+    if (o > l || l > p) continue;
+    const result = estimate({o, l, p});
+    assert.ok(result.hours >= o - 1e-10 && result.hours <= p + 1e-10);
+    near(result.sp * 8, result.hours);
+    if (l < p) assert.ok(estimate({o, l: p, p}).hours >= result.hours);
+  }
+  const result = estimate({o: 0.1, l: 0.2, p: 0.4});
+  near(result.hours, 1.3 / 6);
+  near(result.sp, 1.3 / 48);
+});
+
+test('Decimal comma and dot are accepted without exponents, junk, or excessive precision', () => {
+  for (const [raw, expected] of [[' 0,5 ', 0.5], ['1.20', 1.2], ['.5', 0.5], [',50', 0.5], ['4,', 4], [9.6, 9.6], ['100000.00', MAX_HOURS]]) assert.equal(parseHours(raw), expected);
+  for (const raw of ['', ' ', null, undefined, NaN, Infinity, {}, true, '-1', '0', '+1', '1e2', '1 2', '1.234', '1.200', '1,2.3', '0.001', '100000.01', '<script>']) assert.equal(parseHours(raw), null, String(raw));
+});
+
+test('Missing, non-numeric and out-of-order scenarios cannot produce a result', () => {
+  assert.equal(validateScenarios(DEFAULTS).valid, false);
+  for (const state of [null, {}, DEFAULTS, {o: 0, l: 4, p: 8}, {o: 2, l: NaN, p: 8}, {o: 2, l: 4, p: Infinity}, {o: '2', l: 4, p: 8}, {o: 5, l: 4, p: 8}, {o: 2, l: 9, p: 8}, {o: 5, l: null, p: 4}]) {
+    assert.equal(validateScenarios(state).valid, false);
+    assert.throws(() => estimate(state), RangeError);
+  }
+  assert.ok(validateScenarios({o: 5, l: 4, p: 8}).errors.l);
+  assert.ok(validateScenarios({o: 2, l: 9, p: 8}).errors.p);
+});
+
+test('Old rating links are explicitly retired rather than reinterpreted as hours', () => {
+  for (const hash of ['#m=2&v=3&c=2&r=2', '#m=3&v=1&c=1&r=1&sp=1.2']) {
+    assert.deepEqual(parseState(hash), {...DEFAULTS, legacy: true});
+    assert.throws(() => estimate(parseState(hash)), RangeError);
   }
 });
 
-test('Invalid levels, methods and manual SP are rejected; warnings reflect the effective estimate', () => {
-  for (const v of [NaN, Infinity, 0, -1, 6, 1.5, '3']) assert.throws(() => estimate({...DEFAULTS, v}), RangeError);
-  for (const sp of [NaN, Infinity, 0, -1, 0.001, 1.234, 1000.01, '1.2', {}, true]) assert.throws(() => estimate({...DEFAULTS, sp}), RangeError);
-  assert.throws(() => estimate({...DEFAULTS, m: 99}), RangeError);
-  assert.equal(estimate(DEFAULTS).split, false);
-  assert.equal(estimate({...DEFAULTS, r: 4}).investigate, true);
-  assert.equal(estimate({...DEFAULTS, sp: 13}).split, true);
-  assert.equal(estimate({...DEFAULTS, v: 5, c: 5, r: 5, sp: 0.5}).split, false);
-});
-
-test('All 125 legacy combinations retain upward Fibonacci results and 8-hour conversion', () => {
-  const oldVolume = [1, 2, 3, 5, 8];
-  const complexity = [1, 1.25, 1.5, 2, 3];
-  const risk = [1, 1.1, 1.25, 1.5, 2];
-  for (let v = 1; v <= 5; v++) for (let c = 1; c <= 5; c++) for (let r = 1; r <= 5; r++) {
-    const result = estimate(parseState(`#m=2&v=${v}&c=${c}&r=${r}`));
-    const expected = FIBONACCI.find(point => point >= oldVolume[v - 1] * complexity[c - 1] * risk[r - 1] - 1e-9);
-    assert.equal(result.sp, expected);
-    assert.equal(result.hours, expected * 8);
-    assert.equal(result.legacy, true);
-    assert.equal(result.manual, false);
-  }
-  const legacy = parseState('#m=2&v=3&c=2&r=2&sp=0.5');
-  assert.equal(estimate(legacy).sp, 5);
-  assert.equal(estimate(legacy).hours, 40);
-  assert.equal(legacy.sp, null);
-});
-
-test('Old and new share links round trip and normalize decimal separators', () => {
-  for (const state of [{...DEFAULTS}, {...DEFAULTS, v: 5, c: 1, r: 4, sp: 1.2}, {...DEFAULTS, m: 2, v: 3, c: 2, r: 2}]) {
-    assert.deepEqual(parseState('#' + serializeState(state)), state);
-  }
-  const comma = parseState('#m=3&v=1&c=1&r=1&sp=1%2C20');
-  assert.equal(comma.sp, 1.2);
-  assert.equal(serializeState(comma), 'm=3&v=1&c=1&r=1&sp=1.2');
-  assert.equal(serializeState({...DEFAULTS, sp: 0.01}), 'm=3&v=3&c=2&r=2&sp=0.01');
-});
-
-test('Malformed share parameters fall back safely and cannot override hours per SP', () => {
-  for (const hash of ['#m=99&v=5', '#method', '', null, undefined]) assert.deepEqual(parseState(hash), DEFAULTS);
-  assert.deepEqual(parseState('#m=3&v=<script>&c=-1&r=Infinity&sp=junk'), DEFAULTS);
-  assert.deepEqual(parseState('#m=3&v=0x5&c=5.0&r=1e0&sp=0'), DEFAULTS);
-  for (const sp of ['0', 'NaN', 'Infinity', '1e2', '1.234', '1000.01']) assert.equal(parseState('#m=3&sp=' + sp).sp, null);
-  assert.equal(estimate(parseState('#m=3&sp=1.2&p=1&h=4&hoursPerSp=1')).hours, 9.6);
-  assert.equal(estimate(parseState('#m=2&v=3&c=2&r=2&p=1&h=4')).hours, 40);
-  assert.equal(serializeState({...DEFAULTS, hoursPerSp: 1}), 'm=3&v=3&c=2&r=2');
+test('New links round-trip scenarios, reject malformed values and cannot change the SP rule', () => {
+  const state = {...DEFAULTS, o: 0.5, l: 1.2, p: 4};
+  assert.deepEqual(parseState('#' + serializeState(state)), state);
+  assert.deepEqual(parseState('#m=4&o=0%2C5&l=1.20&p=4&hoursPerSp=1'), state);
+  near(estimate(parseState('#m=4&o=4&l=4&p=4&hoursPerSp=1')).sp, 0.5);
+  for (const hash of ['', '#method', '#m=99&o=4', null, '#m=4&o=<script>&l=NaN&p=Infinity']) assert.deepEqual(parseState(hash), DEFAULTS);
+  const reversed = parseState('#m=4&o=8&l=4&p=2');
+  assert.equal(validateScenarios(reversed).valid, false);
+  assert.throws(() => serializeState(DEFAULTS), RangeError);
 });
