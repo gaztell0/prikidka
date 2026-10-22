@@ -1,4 +1,4 @@
-import {DEFAULTS, HOURS_PER_SP, estimate, parseHours, parseState, validateScenarios} from './model.js';
+import {DEFAULTS, HOURS_PER_SP, estimate, parseHours, parseState, validateScenarios} from './model.js?v=069f11448740';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
