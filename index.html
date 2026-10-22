@@ -16,8 +16,8 @@
       document.documentElement.dataset.theme = theme;
     })();
   </script>
-  <link rel="stylesheet" href="./style.css?v=0cfc8bbbd0fe">
-  <script type="module" src="./app.js?v=f2060daad781"></script>
+  <link rel="stylesheet" href="./style.css?v=4e4a6d48f124">
+  <script type="module" src="./app.js?v=3551a16cce11"></script>
 </head>
 <body>
   <header class="header shell">
@@ -34,7 +34,7 @@
   <main class="shell">
     <section class="calculator-intro" aria-labelledby="assessment-heading">
       <div class="section-heading"><h1 id="assessment-heading">Оценка задачи</h1><button id="reset" class="text-button" type="button"><span aria-hidden="true">↺</span> Сбросить</button></div>
-      <p class="assessment-intro">Оцените одну и ту же задачу в трёх сценариях. В каждом поле — полные трудозатраты: реализация, тестирование и ревью.</p>
+      <p class="assessment-intro">Оцените одну и ту же задачу в трёх сценариях. В каждом поле — трудозатраты на реализацию и ревью.</p>
       <div class="assessment-guide"><p>Один человеко-час — час работы одного человека.</p><button id="load-example" type="button">Подставить пример <span>2 / 4 / 10 ч</span></button></div>
     </section>
     <div class="workspace">
@@ -55,7 +55,7 @@
         </div>
         <div class="scenario">
           <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">P</span><div class="scenario-title"><label for="pessimistic">Пессимистичная<span class="sr-only"> оценка (P)</span></label><span id="p-term" class="scenario-english" lang="en">Pessimistic</span></div><span class="scenario-count">03</span></div>
-          <p id="p-hint" class="scenario-hint">Если проявятся риски: понадобятся переделки, дополнительные проверки или более сложное решение.</p>
+          <p id="p-hint" class="scenario-hint">Если проявятся риски: понадобятся переделки или более сложное решение.</p>
           <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 10" aria-describedby="p-term p-hint p-error"><span aria-hidden="true">чел.-ч</span></div>
           <p id="p-error" class="field-error" hidden></p>
         </div>
@@ -79,12 +79,18 @@
     </div>
 
     <section class="method" id="method" aria-labelledby="method-heading">
-      <div class="method-heading"><h2 id="method-heading">Как работает PERT</h2><p><strong>PERT</strong> — <span lang="en">Program Evaluation and Review Technique</span>, метод оценки и анализа проектов. Он помогает планировать связанные работы с учётом неопределённости. Здесь используется его трёхточечная формула для трудозатрат одной задачи.</p></div>
+      <h2 id="method-heading" class="sr-only">Методология оценки</h2>
+      <details class="method-details" id="pert-method">
+        <summary>Как работает PERT <span aria-hidden="true">＋</span></summary>
+        <div class="pert-content">
+      <div class="method-heading"><p><strong>PERT</strong> — <span lang="en">Program Evaluation and Review Technique</span>, метод оценки и анализа проектов. Он помогает планировать связанные работы с учётом неопределённости. Здесь используется его трёхточечная формула для трудозатрат одной задачи.</p></div>
       <div class="method-steps">
         <article><span class="step-index">01 / PERT</span><h3>Часы = (O + 4M + P) / 6</h3><p>O — удачный сценарий, M — наиболее вероятный, P — неблагоприятный. У M вес 4, у остальных — по 1: поэтому делим сумму на 6. Сложность и риски уже учтены в сценариях.</p><div id="hours-formula" class="formula">Введите O, M и P для расчёта</div></article>
         <article><span class="step-index">02 / ПРАВИЛО ПРОЕКТА</span><h3>SP = часы / 8</h3><p>Оба результата считаются без промежуточного округления. Дополнительный запас сверху не добавляется.</p><div id="sp-formula" class="formula">Результат PERT / 8</div></article>
       </div>
       <div class="method-example"><h3>Пример для одной задачи</h3><p>Удачный сценарий — <strong>2 ч</strong>, обычный — <strong>4 ч</strong>, неблагоприятный — <strong>10 ч</strong>. По PERT: (2 + 4 × 4 + 10) / 6 ≈ <strong>4,67 ч</strong>. По правилу проекта: 4,666… / 8 ≈ <strong>0,58 SP</strong>. Это ориентир для планирования; точность зависит от исходных оценок.</p></div>
+        </div>
+      </details>
       <details class="method-details"><summary>Основание метода и ограничения <span aria-hidden="true">＋</span></summary><div class="method-content">
         <p>Расшифровка PERT и применение метода описаны в <a href="https://www.pmi.org/-/media/pmi/documents/public/pdf/certifications/practice-standard-scheduling.pdf?v=c7ca2721-8c26-4e07-ba47-069d0987bc0c" target="_blank" rel="noopener noreferrer">PMI Practice Standard for Scheduling, § 2.3.3 ↗</a>. Формула (O + 4M + P) / 6 опубликована в материале <a href="https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222" target="_blank" rel="noopener noreferrer">PMI о методах оценки проектов ↗</a>. Это известный способ объединить три экспертные оценки; точность зависит от обоснованности исходных сценариев.</p>
         <p>O и P — границы выбранных сценариев, а не подтверждённый доверительный интервал. Калькулятор не присваивает результату вероятность выполнения и не рассчитывает дату завершения.</p>

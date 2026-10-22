@@ -106,7 +106,10 @@ $('#reset').addEventListener('click', () => {
   syncInputs();
   render();
 });
+$('.header nav a[href="#method"]').addEventListener('click', () => {$('#pert-method').open = true;});
+if (location.hash === '#method') $('#pert-method').open = true;
 window.addEventListener('hashchange', () => {
+  if (location.hash === '#method') $('#pert-method').open = true;
   if (location.hash.startsWith('#m=')) {state = parseState(location.hash); syncInputs(); render();}
 });
 syncInputs();
