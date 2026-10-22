@@ -7,6 +7,35 @@ const touched = new Set();
 const fmt = (value, digits = 2) => new Intl.NumberFormat('ru-RU', {maximumFractionDigits: digits}).format(value);
 let state = parseState(location.hash);
 
+const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+let themePreference = null;
+try {
+  const saved = localStorage.getItem('prikidka.theme');
+  if (saved === 'light' || saved === 'dark') themePreference = saved;
+} catch {}
+
+function applyTheme(theme) {
+  const dark = theme === 'dark';
+  document.documentElement.dataset.theme = theme;
+  $('#theme-label').textContent = dark ? 'Светлая тема' : 'Тёмная тема';
+  const action = dark ? 'Включить светлую тему' : 'Включить тёмную тему';
+  $('#theme-toggle').setAttribute('aria-label', action);
+  $('#theme-toggle').title = action;
+  $('#theme-moon').toggleAttribute('hidden', dark);
+  $('#theme-sun').toggleAttribute('hidden', !dark);
+  $('meta[name="theme-color"]').content = dark ? '#101625' : '#f7f8fa';
+}
+
+applyTheme(themePreference ?? (themeMedia.matches ? 'dark' : 'light'));
+$('#theme-toggle').addEventListener('click', () => {
+  themePreference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(themePreference);
+  try { localStorage.setItem('prikidka.theme', themePreference); } catch {}
+});
+themeMedia.addEventListener('change', event => {
+  if (themePreference === null) applyTheme(event.matches ? 'dark' : 'light');
+});
+
 function displayed(value) {
   // Preserve small positive estimates rather than displaying zero SP.
   const digits = value < 0.01 ? 6 : 2;
@@ -66,6 +95,11 @@ for (const key of keys) {
   });
   fields[key].addEventListener('blur', () => {touched.add(key); render();});
 }
+$('#load-example').addEventListener('click', () => {
+  state = {...DEFAULTS, o: 2, l: 4, p: 10};
+  syncInputs();
+  render();
+});
 $('#reset').addEventListener('click', () => {
   state = {...DEFAULTS};
   if (location.hash.startsWith('#m=')) history.replaceState(null, '', location.pathname + location.search);
