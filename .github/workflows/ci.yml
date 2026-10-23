@@ -25,24 +25,5 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Run model tests
-        run: node --test model.test.js
-
-  deploy-dev:
-    name: deploy-dev
-    needs: test
-    if: ${{ github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    concurrency:
-      group: prikidka-dev
-      cancel-in-progress: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Publish development preview
-        env:
-          DEV_DEPLOY_KEY: ${{ secrets.PRIKIDKA_DEV_DEPLOY_KEY }}
-        run: bash scripts/publish-dev.sh
+      - name: Run model and Pages builder tests
+        run: node --test model.test.js scripts/build-pages.test.mjs
