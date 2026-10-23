@@ -1,5 +1,5 @@
 import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
-import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=8670a3f0a5ce';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=2d1a24e83c57';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
@@ -182,11 +182,7 @@ function render() {
   if (!validation.valid) {
     setMetric('#sp-value', null);
     setMetric('#hours-value', null);
-    const note = visibleError ? t('result.note.fix') : t('result.note.empty');
-    $('#result-values').hidden = true;
-    $('#result-empty').hidden = false;
-    $('#result-empty').textContent = note;
-    $('#result-note').textContent = note;
+    $('#result-note').textContent = visibleError ? t('result.note.fix') : t('result.note.empty');
     $('#hours-formula').textContent = t('result.formula.empty');
     $('#sp-formula').textContent = t('result.formula.sp.empty', {rate: HOURS_PER_SP});
     return;
@@ -199,8 +195,6 @@ function render() {
   const sizing = {wide: metricLength > 6, long: metricLength > 8};
   setMetric('#sp-value', sp, sizing);
   setMetric('#hours-value', hours, sizing);
-  $('#result-values').hidden = false;
-  $('#result-empty').hidden = true;
   $('#result-note').textContent = hours.approximate || sp.approximate ? t('result.note.rounded') : t('result.note.done');
   $('#hours-formula').textContent = t('result.formula.hours', {
     o: fmt(state.o),
@@ -222,9 +216,6 @@ function applyLanguage() {
   }
   for (const element of document.querySelectorAll('[data-i18n-title]')) {
     element.title = t(element.getAttribute('data-i18n-title'));
-  }
-  for (const element of document.querySelectorAll('[data-i18n-placeholder]')) {
-    element.placeholder = t(element.getAttribute('data-i18n-placeholder'));
   }
   document.title = t('page.title');
   $('meta[name="description"]').content = t('page.description');
