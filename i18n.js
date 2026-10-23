@@ -1,6 +1,6 @@
 const MESSAGES = {
   ru: {
-    'page.title': 'Оценка задачи — PERT',
+    'page.title': 'Оценка задачи',
     'page.description': 'Оценка реализации и ревью методом PERT. Три сценария, результат в SP и часах.',
     'app.heading': 'Оценка задачи',
     'scenarios.aria': 'Три оценки трудозатрат в часах',
@@ -63,7 +63,7 @@ const MESSAGES = {
     'source.gao': 'GAO — проверка оценок ↗',
   },
   en: {
-    'page.title': 'Task estimate — PERT',
+    'page.title': 'Task estimate',
     'page.description': 'PERT estimate for implementation and review. Three scenarios, result in SP and hours.',
     'app.heading': 'Task estimate',
     'scenarios.aria': 'Three effort estimates in hours',
