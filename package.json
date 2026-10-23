@@ -1,10 +1,13 @@
 {
   "name": "prikidka",
   "version": "1.0.0",
+  "description": "Статический калькулятор PERT-оценки задачи для GitHub Pages",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "test": "node --test model.test.js scripts/build-pages.test.mjs",
     "dev": "node server.js"
   }
 }
