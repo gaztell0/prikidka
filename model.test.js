@@ -172,7 +172,7 @@ test('URL field values cannot bypass lexical validation or ordering', () => {
   }
 });
 
-test('Documented UI matrix expectations match model behavior; UI execution is separate', () => {
+test('Documented UI matrix expectations match model behavior; UI execution is a manual checklist', () => {
   const matrix = JSON.parse(readFileSync(new URL('./qa-matrix.json', import.meta.url), 'utf8'));
   assert.equal(matrix.pairwiseCases.length, 16);
   for (const row of [...matrix.pairwiseCases, ...matrix.equivalenceCases]) {
