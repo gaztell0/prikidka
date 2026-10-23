@@ -19,18 +19,19 @@ function isHours(value) {
   return typeof value === 'number' && parseHours(value) === value;
 }
 
+// Validation returns message keys, not user-facing text; app.js localizes them.
 export function validateScenarios(state) {
   const errors = {};
   for (const key of keys) {
-    if (!isHours(state?.[key])) errors[key] = 'Укажите от 0,01 до 100 000 часов, до двух знаков после запятой.';
+    if (!isHours(state?.[key])) errors[key] = 'hours';
   }
   if (!errors.o && !errors.l && state.o > state.l) {
-    errors.l = 'Наиболее вероятная оценка должна быть не меньше оптимистичной.';
+    errors.l = 'order.likely';
   }
   if (isHours(state?.l) && !errors.p && state.l > state.p) {
-    errors.p = 'Пессимистичная оценка должна быть не меньше наиболее вероятной.';
+    errors.p = 'order.pessimistic.likely';
   } else if (isHours(state?.o) && !errors.p && state.o > state.p) {
-    errors.p = 'Пессимистичная оценка должна быть не меньше оптимистичной.';
+    errors.p = 'order.pessimistic.optimistic';
   }
   return {valid: Object.keys(errors).length === 0, errors};
 }

@@ -1,10 +1,22 @@
-import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=069f11448740';
+import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=775dcdc26425';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
 const fields = Object.fromEntries(keys.map(key => [key, $(`input[name="${key}"]`)]));
 const touched = new Set();
-const fmt = (value, digits = 2) => new Intl.NumberFormat('ru-RU', {maximumFractionDigits: digits}).format(value);
+let lang = document.documentElement.lang === 'en' ? 'en' : 'ru';
+const t = (key, vars) => translate(lang, key, vars);
+const formatters = new Map();
+function fmt(value, digits = 2) {
+  const cacheKey = `${lang}:${digits}`;
+  let formatter = formatters.get(cacheKey);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(localeFor(lang), {maximumFractionDigits: digits});
+    formatters.set(cacheKey, formatter);
+  }
+  return formatter.format(value);
+}
 let state = parseState(location.hash);
 const isModelHash = hash => new URLSearchParams(hash.replace(/^#/, '')).has('m');
 
@@ -18,15 +30,14 @@ try {
 function applyTheme(theme) {
   const dark = theme === 'dark';
   document.documentElement.dataset.theme = theme;
-  $('#theme-label').textContent = dark ? 'Светлая тема' : 'Тёмная тема';
-  const action = dark ? 'Включить светлую тему' : 'Включить тёмную тему';
+  $('#theme-label').textContent = t(dark ? 'theme.light' : 'theme.dark');
+  const action = t(dark ? 'theme.action.light' : 'theme.action.dark');
   $('#theme-toggle').setAttribute('aria-label', action);
   $('#theme-toggle').title = action;
   $('#theme-moon').toggleAttribute('hidden', dark);
   $('#theme-sun').toggleAttribute('hidden', !dark);
   $('meta[name="theme-color"]').content = dark ? '#111318' : '#f8fafc';
 }
-applyTheme(themePreference ?? (themeMedia.matches ? 'dark' : 'light'));
 $('#theme-toggle').addEventListener('click', () => {
   themePreference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   applyTheme(themePreference);
@@ -115,21 +126,36 @@ function displayed(value) {
 }
 
 function syncInputs() {
-  for (const key of keys) fields[key].value = state[key] === null ? '' : String(state[key]).replace('.', ',');
+  const separator = decimalSeparatorFor(lang);
+  for (const key of keys) fields[key].value = state[key] === null ? '' : String(state[key]).replace('.', separator);
   touched.clear();
+}
+
+function formatInputs() {
+  const separator = decimalSeparatorFor(lang);
+  for (const key of keys) {
+    if (state[key] !== null) fields[key].value = String(state[key]).replace('.', separator);
+  }
+}
+
+function errorVars() {
+  return {min: fmt(0.01, 2), max: fmt(MAX_HOURS), unit: t('unit.hours')};
 }
 
 function inputError(key, validation) {
   const raw = fields[key].value.trim();
-  if (!raw) return 'Укажите часы.';
-  if (parseHours(raw) !== null) return validation.errors[key] ?? '';
+  if (!raw) return t('error.empty');
+  if (parseHours(raw) !== null) {
+    return validation.errors[key] ? t(`error.${validation.errors[key]}`, errorVars()) : '';
+  }
   if (/^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(raw)) {
     const number = Number(raw.replace(',', '.'));
-    if (number < 0.01) return 'Минимум — 0,01 ч.';
-    if (number > MAX_HOURS) return 'Максимум — 100 000 ч.';
-    if ((raw.split(/[.,]/)[1] ?? '').length > 2) return 'Оставьте не больше двух знаков после запятой.';
+    const vars = errorVars();
+    if (number < 0.01) return t('error.min', vars);
+    if (number > MAX_HOURS) return t('error.max', vars);
+    if ((raw.split(/[.,]/)[1] ?? '').length > 2) return t('error.precision');
   }
-  return 'Введите число, например 1,5 или 1.5.';
+  return t('error.number');
 }
 
 function setMetric(selector, value) {
@@ -137,7 +163,7 @@ function setMetric(selector, value) {
   element.textContent = value?.text ?? '—';
   element.classList.toggle('is-wide', (value?.text.length ?? 0) > 6);
   element.classList.toggle('is-long', (value?.text.length ?? 0) > 8);
-  element.title = value?.approximate ? 'Округлено для отображения' : '';
+  element.title = value?.approximate ? t('result.title.rounded') : '';
 }
 
 function render() {
@@ -155,9 +181,9 @@ function render() {
   if (!validation.valid) {
     setMetric('#sp-value', null);
     setMetric('#hours-value', null);
-    $('#result-note').textContent = visibleError ? 'Исправьте отмеченные поля.' : 'Введите три оценки в часах.';
-    $('#hours-formula').textContent = 'Введите три оценки для расчёта.';
-    $('#sp-formula').textContent = `Результат PERT / ${HOURS_PER_SP}`;
+    $('#result-note').textContent = visibleError ? t('result.note.fix') : t('result.note.empty');
+    $('#hours-formula').textContent = t('result.formula.empty');
+    $('#sp-formula').textContent = t('result.formula.sp.empty', {rate: HOURS_PER_SP});
     return;
   }
   const result = estimate(state);
@@ -165,10 +191,45 @@ function render() {
   const sp = displayed(result.sp);
   setMetric('#sp-value', sp);
   setMetric('#hours-value', hours);
-  $('#result-note').textContent = hours.approximate || sp.approximate ? 'Значения округлены для отображения.' : 'Оценка рассчитана.';
-  $('#hours-formula').textContent = `(${fmt(state.o)} + 4 × ${fmt(state.l)} + ${fmt(state.p)}) / 6 → ${hours.text} ч`;
-  $('#sp-formula').textContent = `((O + 4M + P) / 6) / ${HOURS_PER_SP} → ${sp.text} SP`;
+  $('#result-note').textContent = hours.approximate || sp.approximate ? t('result.note.rounded') : t('result.note.done');
+  $('#hours-formula').textContent = t('result.formula.hours', {
+    o: fmt(state.o),
+    l: fmt(state.l),
+    p: fmt(state.p),
+    hours: hours.text,
+    unit: t('unit.hours'),
+  });
+  $('#sp-formula').textContent = t('result.formula.sp', {rate: HOURS_PER_SP, sp: sp.text});
 }
+
+function applyLanguage() {
+  document.documentElement.lang = lang;
+  for (const element of document.querySelectorAll('[data-i18n]')) {
+    element.textContent = t(element.getAttribute('data-i18n'));
+  }
+  for (const element of document.querySelectorAll('[data-i18n-aria-label]')) {
+    element.setAttribute('aria-label', t(element.getAttribute('data-i18n-aria-label')));
+  }
+  for (const element of document.querySelectorAll('[data-i18n-title]')) {
+    element.title = t(element.getAttribute('data-i18n-title'));
+  }
+  document.title = t('page.title');
+  $('meta[name="description"]').content = t('page.description');
+  const toggle = $('#lang-toggle');
+  toggle.textContent = t('lang.button');
+  toggle.setAttribute('aria-label', t('lang.aria'));
+  toggle.title = t('lang.aria');
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+  render();
+  if (activeHelp) placeHelp();
+}
+
+$('#lang-toggle').addEventListener('click', () => {
+  lang = lang === 'ru' ? 'en' : 'ru';
+  try { localStorage.setItem('prikidka.lang', lang); } catch {}
+  formatInputs();
+  applyLanguage();
+});
 
 for (const key of keys) {
   fields[key].addEventListener('input', () => {
@@ -192,4 +253,4 @@ window.addEventListener('hashchange', () => {
   if (isModelHash(location.hash)) {state = parseState(location.hash); syncInputs(); render();}
 });
 syncInputs();
-render();
+applyLanguage();
