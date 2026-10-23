@@ -1,9 +1,8 @@
 # Прикидка — калькулятор PERT-оценки
 
-Статический калькулятор трёхточечной оценки задачи: три сценария в часах, результат в часах и в SP. Без фреймворков, зависимостей и сборки — HTML, CSS и ES-модули.
+Одностраничный статический калькулятор трёхточечной оценки задачи: три сценария в часах, результат в часах и в SP. Без фреймворков, зависимостей, сборки и отдельных workflow.
 
-- Прод: https://gaztell0.github.io/prikidka/
-- Dev-превью: https://gaztell0.github.io/prikidka/dev/
+Сайт: https://gaztell0.github.io/prikidka/
 
 ## Что считает
 
@@ -26,16 +25,6 @@ npm run dev
 
 `server.js` — минимальный статический сервер с `cache-control: no-store`; он отдаёт только файлы сайта.
 
-## Проверка сборки
-
-Автотестов в проекте нет. Workflow `CI` проверяет только то, что входные файлы сайта собираются, и после успеха запускает Pages:
-
-```bash
-out="$(mktemp -d)/site"
-node scripts/build-pages.mjs --prod . --dev . --output "$out" \
-  --prod-sha "$(git rev-parse HEAD)" --dev-sha "$(git rev-parse HEAD)"
-```
-
 ## Структура
 
 | Файл | Назначение |
@@ -45,31 +34,22 @@ node scripts/build-pages.mjs --prod . --dev . --output "$out" \
 | `model.js` | Чистая модель: парсинг, валидация, PERT, состояние URL |
 | `app.js` | DOM: ввод, ошибки, тема, подсказки, deep links |
 | `server.js` | Локальный сервер для разработки |
-| `scripts/build-pages.mjs` | Сборка объединённого сайта prod + `/dev` |
-| `.github/workflows/ci.yml` | Проверка сборки на push/PR; триггер Pages |
-| `.github/workflows/pages.yml` | Публикация на GitHub Pages |
+| `package.json` | Только скрипт `npm run dev` |
+| `.nojekyll` | Отключает Jekyll на GitHub Pages |
 
 ## Публикация
 
-Один репозиторий и один Pages-сайт:
+GitHub Pages публикует ветку `main` (корень репозитория) напрямую. Отдельного workflow, сборки и dev-сайта нет: любой push в `main` обновляет сайт.
 
-- **прод** в корне `/` собирается из `main`;
-- **dev-превью** в `/dev/` собирается из `dev`;
-- в обоих корнях публикуется `deployment.json` с `environment`, `branch` и `sha`.
+В списке Actions может отображаться `pages-build-deployment` — это встроенный механизм GitHub Pages, а не workflow проекта.
 
-Поток:
+## Кэш
 
-1. Push или merge в `main` (только через PR — ветка защищена) запускает проверку сборки.
-2. Успешная проверка запускает workflow `Pages`, который берёт последний зелёный пуш каждой ветки.
-3. `scripts/build-pages.mjs` проверяет regular-файлы, актуальность `?v=`-хешей и полные SHA, затем собирает `_site`: корень из `main`, `/dev` из `dev` с заголовком `DEV ·`.
-4. `actions/deploy-pages` публикует сайт.
+При изменении `style.css`, `app.js` или `model.js` обновите `?v=<первые 12 символов sha256>` в `index.html` / `app.js`:
 
-Особенности:
-
-- Нужна успешная проверка сборки **обеих** веток: если у `main` или `dev` нет успешного push-рана, деплой пропускается целиком и сайт остаётся прежним.
-- `main` защищена: прямые пуши запрещены, изменения — через PR.
-- Ветка окружения `github-pages` разрешает деплой только из `main` (workflow запускается на ref `main` даже при триггере из `dev`).
-- Кэш сбрасывается вручную: при изменении `style.css`, `app.js` или `model.js` обновите `?v=<sha256-12>` в `index.html`/`app.js`. Сборка упадёт, если хеш не совпадает с файлом.
+```bash
+shasum -a 256 style.css | cut -c1-12
+```
 
 ## Ограничения
 
