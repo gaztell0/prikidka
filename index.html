@@ -19,7 +19,7 @@
       document.documentElement.lang = language === 'en' ? 'en' : 'ru';
     })();
   </script>
-  <link rel="stylesheet" href="./style.css?v=c04db31088bf">
+  <link rel="stylesheet" href="./style.css?v=f3e9871d4ebd">
   <script type="module" src="./app.js?v=ec734e81f5cf"></script>
 </head>
 <body>
@@ -28,7 +28,7 @@
       <h1 data-i18n="app.heading">Оценка задачи</h1>
       <div class="actions">
         <button id="lang-toggle" class="icon-button lang-button" type="button" aria-label="Переключить на английский" title="Переключить на английский">EN</button>
-        <button id="reset" class="icon-button reset-button" type="button" aria-label="Сбросить оценку" title="Сбросить оценку" data-i18n-aria-label="reset.aria" data-i18n-title="reset.aria"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M4.8 9.5a8 8 8 0 1 1 .3 6.1"/></svg><span class="reset-label" data-i18n="reset.label">Сбросить</span></button>
+        <button id="reset" class="icon-button reset-button" type="button" aria-label="Сбросить оценку" title="Сбросить оценку" data-i18n-aria-label="reset.aria" data-i18n-title="reset.aria"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span class="reset-label" data-i18n="reset.label">Сбросить</span></button>
         <button id="theme-toggle" class="icon-button" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">
           <svg id="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.3A8.8 8.8 0 0 1 10.7 3.5a8.8 8.8 0 1 0 9.8 9.8Z"/></svg>
           <svg id="theme-sun" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
@@ -69,7 +69,7 @@
 
     <section id="method" class="method" aria-label="Методика оценки" data-i18n-aria-label="method.aria">
       <details id="pert-method">
-        <summary><span data-i18n="method.summary">Как считается оценка</span> <span aria-hidden="true">＋</span></summary>
+        <summary><span data-i18n="method.summary">Как считается оценка</span> <span class="summary-icon" aria-hidden="true">＋</span></summary>
         <div class="method-content">
           <p><strong>PERT</strong> (<span lang="en">Program Evaluation and Review Technique</span>) <span data-i18n="method.intro">— метод оценки и анализа проектов. Здесь используется его трёхточечная формула для одной задачи.</span></p>
           <dl class="definitions">
