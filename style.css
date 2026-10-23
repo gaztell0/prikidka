@@ -56,12 +56,15 @@ h1 { font-size: 23px; font-weight: 650; line-height: 1.3; letter-spacing: -.5px;
 .hours-field:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
 .hours-field:has(input[aria-invalid="true"]) { border-color: var(--error); }
 .hours-field input { display: block; width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: var(--ink); padding: 9px 8px; text-align: right; font-size: 18px; line-height: 24px; font-variant-numeric: tabular-nums; border-radius: 9px; }
+.hours-field input::placeholder { color: var(--muted); font-size: 13px; }
 .hours-field > span { padding: 0 10px 0 2px; font-size: 13px; color: var(--muted); }
 .field-error { grid-column: 1 / -1; margin-top: 9px; color: var(--error); font-size: 13px; line-height: 1.5; }
 .legacy-note { color: var(--error); font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
 .result-card { display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 24px; background: var(--accent-soft); border-radius: 14px; }
 .result-card h2 { color: var(--muted); font-size: 14px; font-weight: 500; line-height: 1.5; margin-bottom: 22px; }
-.result-values { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+.result-body { display: flex; align-items: center; min-height: 69px; }
+.result-values { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; width: 100%; }
+.result-empty { margin: 0; max-width: 32ch; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .metric { min-width: 0; }
 .metric-label { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 7px; }
 .metric-value { display: flex; align-items: center; min-height: 44px; font-size: 36px; font-weight: 600; line-height: 1.2; letter-spacing: -1px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
