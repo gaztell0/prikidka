@@ -158,11 +158,11 @@ function inputError(key, validation) {
   return t('error.number');
 }
 
-function setMetric(selector, value) {
+function setMetric(selector, value, sizing = {}) {
   const element = $(selector);
   element.textContent = value?.text ?? '—';
-  element.classList.toggle('is-wide', (value?.text.length ?? 0) > 6);
-  element.classList.toggle('is-long', (value?.text.length ?? 0) > 8);
+  element.classList.toggle('is-wide', Boolean(sizing.wide));
+  element.classList.toggle('is-long', Boolean(sizing.long));
   element.title = value?.approximate ? t('result.title.rounded') : '';
 }
 
@@ -189,8 +189,11 @@ function render() {
   const result = estimate(state);
   const hours = displayed(result.hours);
   const sp = displayed(result.sp);
-  setMetric('#sp-value', sp);
-  setMetric('#hours-value', hours);
+  // Keep both metrics at the same size: shrink them together based on the longer value.
+  const metricLength = Math.max(hours.text.length, sp.text.length);
+  const sizing = {wide: metricLength > 6, long: metricLength > 8};
+  setMetric('#sp-value', sp, sizing);
+  setMetric('#hours-value', hours, sizing);
   $('#result-note').textContent = hours.approximate || sp.approximate ? t('result.note.rounded') : t('result.note.done');
   $('#hours-formula').textContent = t('result.formula.hours', {
     o: fmt(state.o),
