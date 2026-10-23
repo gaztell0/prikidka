@@ -3,103 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f8fa">
-  <meta name="description" content="Оценка трудозатрат по PERT: оптимистичный, наиболее вероятный и пессимистичный сценарии. Результат в часах и SP по правилу проекта: 1 SP = 8 человеко-часов.">
-  <title>Прикидка — PERT в SP и часах</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%234859e8'/%3E%3Cpath d='M16 45V30m16 15V20m16 25V13' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Оценка реализации и ревью методом PERT. Три сценария, результат в SP и часах.">
+  <title>Оценка задачи — PERT</title>
   <script>
     (() => {
       let preference = null;
       try { preference = localStorage.getItem('prikidka.theme'); } catch {}
-      const theme = preference === 'light' || preference === 'dark'
+      document.documentElement.dataset.theme = preference === 'light' || preference === 'dark'
         ? preference : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.dataset.theme = theme;
     })();
   </script>
-  <link rel="stylesheet" href="./style.css?v=4e4a6d48f124">
-  <script type="module" src="./app.js?v=3551a16cce11"></script>
+  <link rel="stylesheet" href="./style.css?v=bf8ce4af6757">
+  <script type="module" src="./app.js?v=6f1ae472c49d"></script>
 </head>
 <body>
-  <header class="header shell">
-    <a class="brand" href="./" aria-label="Прикидка — на главную"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>прикидка<span class="brand-dot">.</span></a>
-    <nav aria-label="Навигация">
-      <a href="#method">Как считаем <span aria-hidden="true">↗</span></a>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">
-        <svg id="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.3A8.8 8.8 0 0 1 10.7 3.5a8.8 8.8 0 1 0 9.8 9.8Z"/></svg>
-        <svg id="theme-sun" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
-        <span id="theme-label">Тёмная тема</span>
-      </button>
-    </nav>
-  </header>
-  <main class="shell">
-    <section class="calculator-intro" aria-labelledby="assessment-heading">
-      <div class="section-heading"><h1 id="assessment-heading">Оценка задачи</h1><button id="reset" class="text-button" type="button"><span aria-hidden="true">↺</span> Сбросить</button></div>
-      <p class="assessment-intro">Оцените одну и ту же задачу в трёх сценариях. В каждом поле — трудозатраты на реализацию и ревью.</p>
-      <div class="assessment-guide"><p>Один человеко-час — час работы одного человека.</p><button id="load-example" type="button">Подставить пример <span>2 / 4 / 10 ч</span></button></div>
-    </section>
-    <div class="workspace">
-      <section class="assessment" aria-label="Три оценки трудозатрат">
-        <p id="legacy-note" class="legacy-note" hidden>В ссылке указаны оценки по прежним шкалам. Их нельзя автоматически перевести в PERT — заполните три сценария заново.</p>
+  <main class="calculator">
+    <header class="toolbar">
+      <h1>Оценка задачи</h1>
+      <div class="actions">
+        <button id="reset" class="icon-button reset-button" type="button" aria-label="Сбросить оценку" title="Сбросить оценку"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M4.8 9.5a8 8 0 1 1 .3 6.1"/></svg><span class="reset-label">Сбросить</span></button>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">
+          <svg id="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.3A8.8 8.8 0 0 1 10.7 3.5a8.8 8.8 0 1 0 9.8 9.8Z"/></svg>
+          <svg id="theme-sun" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          <span id="theme-label" class="sr-only">Тёмная тема</span>
+        </button>
+      </div>
+    </header>
 
+    <div class="estimate-layout">
+      <section class="scenarios" aria-label="Три оценки трудозатрат в часах">
+        <p id="legacy-note" class="legacy-note" hidden>Ссылка содержит прежние шкалы. Введите три оценки в часах заново.</p>
         <div class="scenario">
-          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">O</span><div class="scenario-title"><label for="optimistic">Оптимистичная<span class="sr-only"> оценка (O)</span></label><span id="o-term" class="scenario-english" lang="en">Optimistic</span></div><span class="scenario-count">01</span></div>
-          <p id="o-hint" class="scenario-hint">Если всё идёт благоприятно: решение знакомо, препятствий и переделок почти нет.</p>
-          <div class="hours-field"><input id="optimistic" name="o" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 2" aria-describedby="o-term o-hint o-error"><span aria-hidden="true">чел.-ч</span></div>
+          <div class="scenario-label"><label for="optimistic">Оптимистичная<span class="sr-only"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="o" aria-label="Как понять оптимистичную оценку" aria-expanded="false" aria-controls="o-help" aria-describedby="o-help"><span aria-hidden="true">?</span></button></div>
+          <div class="hours-field"><input id="optimistic" name="o" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="o-error"><span aria-hidden="true">ч</span></div>
           <p id="o-error" class="field-error" hidden></p>
         </div>
         <div class="scenario">
-          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">M</span><div class="scenario-title"><label for="likely">Наиболее вероятная<span class="sr-only"> оценка (M)</span></label><span id="l-term" class="scenario-english" lang="en">Most likely</span></div><span class="scenario-count">02</span></div>
-          <p id="l-hint" class="scenario-hint">Обычный ход работы с учётом сложности и привычных затруднений. Самый вероятный сценарий.</p>
-          <div class="hours-field"><input id="likely" name="l" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 4" aria-describedby="l-term l-hint l-error"><span aria-hidden="true">чел.-ч</span></div>
+          <div class="scenario-label"><label for="likely">Вероятная<span class="sr-only"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="l" aria-label="Как понять вероятную оценку" aria-expanded="false" aria-controls="l-help" aria-describedby="l-help"><span aria-hidden="true">?</span></button></div>
+          <div class="hours-field"><input id="likely" name="l" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="l-error"><span aria-hidden="true">ч</span></div>
           <p id="l-error" class="field-error" hidden></p>
         </div>
         <div class="scenario">
-          <div class="scenario-heading"><span class="scenario-symbol" aria-hidden="true">P</span><div class="scenario-title"><label for="pessimistic">Пессимистичная<span class="sr-only"> оценка (P)</span></label><span id="p-term" class="scenario-english" lang="en">Pessimistic</span></div><span class="scenario-count">03</span></div>
-          <p id="p-hint" class="scenario-hint">Если проявятся риски: понадобятся переделки или более сложное решение.</p>
-          <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Например, 10" aria-describedby="p-term p-hint p-error"><span aria-hidden="true">чел.-ч</span></div>
+          <div class="scenario-label"><label for="pessimistic">Пессимистичная<span class="sr-only"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="p" aria-label="Как понять пессимистичную оценку" aria-expanded="false" aria-controls="p-help" aria-describedby="p-help"><span aria-hidden="true">?</span></button></div>
+          <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="p-error"><span aria-hidden="true">ч</span></div>
           <p id="p-error" class="field-error" hidden></p>
         </div>
-        <p class="scope-note">Все три числа — про одну задачу целиком. Оптимистичная ≤ наиболее вероятная ≤ пессимистичная (O ≤ M ≤ P). Дробные часы можно вводить через запятую или точку.</p>
       </section>
 
-      <aside class="result-column" aria-labelledby="result-heading">
-        <section class="result-card">
-          <h2 id="result-heading">Ожидаемая оценка по PERT</h2>
-          <div class="result-values" aria-live="polite" aria-atomic="true">
-            <p class="points"><span id="sp-value">—</span><span class="unit">SP</span></p>
-            <p id="result-caption" class="result-caption">Заполните три сценария</p>
-            <div class="hours-result"><p class="hours-label">Ожидаемые трудозатраты</p><p class="hours"><span id="hours-value">—</span><span class="hours-unit"> чел.-ч</span></p></div>
-            <div id="scenario-range" class="scenario-range" hidden><span>Сценарии O — P</span><strong id="range-value"></strong></div>
-            <p id="result-note" class="result-note">Результат появится после ввода трёх корректных оценок.</p>
-          </div>
-        </section>
-        <div class="project-rule"><span class="rule-symbol" aria-hidden="true">＝</span><div><strong>1 SP = 8 человеко-часов</strong><p>Правило вашего проекта. SP = часы / 8.<br>Дробные SP сохраняются.</p></div></div>
-        <p class="planning-note">Человеко-часы описывают трудозатраты. Календарный срок зависит также от ожиданий, зависимостей и доступности команды.</p>
-      </aside>
+      <section class="result-card" aria-labelledby="result-heading">
+        <h2 id="result-heading">Результат</h2>
+        <div class="result-values" aria-live="polite" aria-atomic="true">
+          <div class="metric"><span class="metric-label">SP</span><strong class="metric-value" id="sp-value">—</strong></div>
+          <div class="metric"><span class="metric-label">Часы</span><strong class="metric-value" id="hours-value">—</strong></div>
+          <p id="result-note" class="sr-only">Введите три оценки в часах.</p>
+        </div>
+      </section>
     </div>
 
-    <section class="method" id="method" aria-labelledby="method-heading">
-      <h2 id="method-heading" class="sr-only">Методология оценки</h2>
-      <details class="method-details" id="pert-method">
-        <summary>Как работает PERT <span aria-hidden="true">＋</span></summary>
-        <div class="pert-content">
-      <div class="method-heading"><p><strong>PERT</strong> — <span lang="en">Program Evaluation and Review Technique</span>, метод оценки и анализа проектов. Он помогает планировать связанные работы с учётом неопределённости. Здесь используется его трёхточечная формула для трудозатрат одной задачи.</p></div>
-      <div class="method-steps">
-        <article><span class="step-index">01 / PERT</span><h3>Часы = (O + 4M + P) / 6</h3><p>O — удачный сценарий, M — наиболее вероятный, P — неблагоприятный. У M вес 4, у остальных — по 1: поэтому делим сумму на 6. Сложность и риски уже учтены в сценариях.</p><div id="hours-formula" class="formula">Введите O, M и P для расчёта</div></article>
-        <article><span class="step-index">02 / ПРАВИЛО ПРОЕКТА</span><h3>SP = часы / 8</h3><p>Оба результата считаются без промежуточного округления. Дополнительный запас сверху не добавляется.</p><div id="sp-formula" class="formula">Результат PERT / 8</div></article>
-      </div>
-      <div class="method-example"><h3>Пример для одной задачи</h3><p>Удачный сценарий — <strong>2 ч</strong>, обычный — <strong>4 ч</strong>, неблагоприятный — <strong>10 ч</strong>. По PERT: (2 + 4 × 4 + 10) / 6 ≈ <strong>4,67 ч</strong>. По правилу проекта: 4,666… / 8 ≈ <strong>0,58 SP</strong>. Это ориентир для планирования; точность зависит от исходных оценок.</p></div>
+    <section id="method" class="method" aria-label="Методика оценки">
+      <details id="pert-method">
+        <summary>Как считается оценка <span aria-hidden="true">＋</span></summary>
+        <div class="method-content">
+          <p><strong>PERT</strong> (<span lang="en">Program Evaluation and Review Technique</span>) — метод оценки и анализа проектов. Здесь используется его трёхточечная формула для одной задачи.</p>
+          <dl class="definitions">
+            <div><dt>O · <span lang="en">Optimistic</span></dt><dd>Оптимистичная: всё идёт благоприятно, переделок почти нет.</dd></div>
+            <div><dt>M · <span lang="en">Most likely</span></dt><dd>Наиболее вероятная: обычный ход работы с привычными затруднениями.</dd></div>
+            <div><dt>P · <span lang="en">Pessimistic</span></dt><dd>Пессимистичная: проявляются риски, нужны переделки или более сложное решение.</dd></div>
+          </dl>
+          <p>В каждом поле — вся реализация и ревью. Укажите от 0,01 до 100 000 ч, до двух знаков после запятой. Подходят запятая и точка. Соблюдайте порядок O ≤ M ≤ P.</p>
+          <div class="method-formulas"><div><h3>Часы = (O + 4M + P) / 6</h3><p>У M вес 4, у остальных — по 1.</p><p id="hours-formula" class="formula">Введите три оценки для расчёта.</p></div><div><h3>SP = часы / 8</h3><p>Пересчёт по принятому в проекте правилу.</p><p id="sp-formula" class="formula">Результат PERT / 8</p></div></div>
+          <p>Знак ≈ означает округление для отображения. Часы и SP считаются без промежуточного округления. Это экспертный прогноз: границы O — P не являются подтверждённым доверительным интервалом. Уточняйте оценки по фактическим трудозатратам команды.</p>
+          <p class="sources">Источники: <a href="https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222" target="_blank" rel="noopener noreferrer">PMI — трёхточечная оценка ↗</a>, <a href="https://www.pmi.org/-/media/pmi/documents/public/pdf/certifications/practice-standard-scheduling.pdf?v=c7ca2721-8c26-4e07-ba47-069d0987bc0c" target="_blank" rel="noopener noreferrer">PMI — PERT, § 2.3.3 ↗</a>, <a href="https://www.gao.gov/products/gao-20-195g" target="_blank" rel="noopener noreferrer">GAO — проверка оценок ↗</a>.</p>
         </div>
       </details>
-      <details class="method-details"><summary>Основание метода и ограничения <span aria-hidden="true">＋</span></summary><div class="method-content">
-        <p>Расшифровка PERT и применение метода описаны в <a href="https://www.pmi.org/-/media/pmi/documents/public/pdf/certifications/practice-standard-scheduling.pdf?v=c7ca2721-8c26-4e07-ba47-069d0987bc0c" target="_blank" rel="noopener noreferrer">PMI Practice Standard for Scheduling, § 2.3.3 ↗</a>. Формула (O + 4M + P) / 6 опубликована в материале <a href="https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222" target="_blank" rel="noopener noreferrer">PMI о методах оценки проектов ↗</a>. Это известный способ объединить три экспертные оценки; точность зависит от обоснованности исходных сценариев.</p>
-        <p>O и P — границы выбранных сценариев, а не подтверждённый доверительный интервал. Калькулятор не присваивает результату вероятность выполнения и не рассчитывает дату завершения.</p>
-        <p>Фиксированные 8 человеко-часов за SP — договорённость вашего проекта. В <a href="https://agilealliance.org/glossary/points-estimates-in/" target="_blank" rel="noopener noreferrer">Agile Alliance ↗</a> SP описаны как относительная оценка. Деление на 8 не является частью PERT.</p>
-        <p>При совпадении сценариев: 4 ч → 0,5 SP; 9,6 ч → 1,2 SP; 12 ч → 1,5 SP. Знак ≈ появляется, если значение округлено для отображения. Для малых значений показывается больше знаков, чтобы результат не превращался в ноль.</p>
-        <p>Сопоставляйте оценки с фактическими трудозатратами завершённых задач и уточняйте сценарии команды. Такой подход к улучшению оценок описан в <a href="https://www.gao.gov/products/gao-20-195g" target="_blank" rel="noopener noreferrer">GAO Cost Estimating and Assessment Guide ↗</a>.</p>
-      </div></details>
     </section>
   </main>
-  <noscript><div class="noscript">Для расчёта включите JavaScript в браузере.</div></noscript>
+  <p id="o-help" class="help-popover" role="tooltip" hidden>Если всё идёт благоприятно: решение знакомо, зависимости готовы, переделок почти нет. Укажите реалистичный минимум часов на всю задачу.</p>
+  <p id="l-help" class="help-popover" role="tooltip" hidden>Обычный ход работы с учётом сложности. Заложите привычные уточнения и небольшие переделки — это ваша наиболее вероятная оценка.</p>
+  <p id="p-help" class="help-popover" role="tooltip" hidden>Если проявятся известные риски: понадобится более сложное решение или переделки. Заложите дополнительные усилия на всю задачу в таком сценарии.</p>
+  <noscript><p class="noscript">Для расчёта включите JavaScript.</p></noscript>
 </body>
 </html>
