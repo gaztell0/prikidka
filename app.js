@@ -161,6 +161,7 @@ function inputError(key, validation) {
 function setMetric(selector, value, sizing = {}) {
   const element = $(selector);
   element.textContent = value?.text ?? '—';
+  element.classList.toggle('is-empty', !value);
   element.classList.toggle('is-wide', Boolean(sizing.wide));
   element.classList.toggle('is-long', Boolean(sizing.long));
   element.title = value?.approximate ? t('result.title.rounded') : '';

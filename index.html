@@ -19,8 +19,8 @@
       document.documentElement.lang = language === 'en' ? 'en' : 'ru';
     })();
   </script>
-  <link rel="stylesheet" href="./style.css?v=ba3d6c5a9b50">
-  <script type="module" src="./app.js?v=a2da913ad920"></script>
+  <link rel="stylesheet" href="./style.css?v=25bf86f873b0">
+  <script type="module" src="./app.js?v=88b1d34a9392"></script>
 </head>
 <body>
   <main class="calculator">
@@ -42,17 +42,17 @@
         <p id="legacy-note" class="legacy-note" hidden data-i18n="legacy.note">Ссылка содержит прежние шкалы. Введите три оценки в часах заново.</p>
         <div class="scenario">
           <div class="scenario-label"><label for="optimistic"><span data-i18n="label.optimistic">Оптимистичная</span><span class="sr-only" data-i18n="label.sr"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="o" aria-label="Как понять оптимистичную оценку" data-i18n-aria-label="help.o.aria" aria-expanded="false" aria-controls="o-help" aria-describedby="o-help"><span aria-hidden="true">?</span></button></div>
-          <div class="hours-field"><input id="optimistic" name="o" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="o-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
+          <div class="hours-field"><input id="optimistic" name="o" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="o-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
           <p id="o-error" class="field-error" hidden></p>
         </div>
         <div class="scenario">
           <div class="scenario-label"><label for="likely"><span data-i18n="label.likely">Вероятная</span><span class="sr-only" data-i18n="label.sr"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="l" aria-label="Как понять вероятную оценку" data-i18n-aria-label="help.l.aria" aria-expanded="false" aria-controls="l-help" aria-describedby="l-help"><span aria-hidden="true">?</span></button></div>
-          <div class="hours-field"><input id="likely" name="l" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="l-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
+          <div class="hours-field"><input id="likely" name="l" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="l-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
           <p id="l-error" class="field-error" hidden></p>
         </div>
         <div class="scenario">
           <div class="scenario-label"><label for="pessimistic"><span data-i18n="label.pessimistic">Пессимистичная</span><span class="sr-only" data-i18n="label.sr"> оценка, часы</span></label><button type="button" class="help-trigger" data-help="p" aria-label="Как понять пессимистичную оценку" data-i18n-aria-label="help.p.aria" aria-expanded="false" aria-controls="p-help" aria-describedby="p-help"><span aria-hidden="true">?</span></button></div>
-          <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="—" aria-describedby="p-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
+          <div class="hours-field"><input id="pessimistic" name="p" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="p-error"><span aria-hidden="true" data-i18n="unit.hours">ч</span></div>
           <p id="p-error" class="field-error" hidden></p>
         </div>
       </section>
@@ -60,8 +60,8 @@
       <section class="result-card" aria-labelledby="result-heading">
         <h2 id="result-heading" data-i18n="result.heading">Результат</h2>
         <div class="result-values" aria-live="polite" aria-atomic="true">
-          <div class="metric"><span class="metric-label" data-i18n="metric.sp">SP</span><strong class="metric-value" id="sp-value">—</strong></div>
-          <div class="metric"><span class="metric-label" data-i18n="metric.hours">Часы</span><strong class="metric-value" id="hours-value">—</strong></div>
+          <div class="metric"><span class="metric-label" data-i18n="metric.sp">SP</span><strong class="metric-value is-empty" id="sp-value">—</strong></div>
+          <div class="metric"><span class="metric-label" data-i18n="metric.hours">Часы</span><strong class="metric-value is-empty" id="hours-value">—</strong></div>
           <p id="result-note" class="sr-only">Введите три оценки в часах.</p>
         </div>
       </section>
