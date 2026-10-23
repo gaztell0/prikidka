@@ -1,5 +1,5 @@
 import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
-import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=453c98635621';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=2d1a24e83c57';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
@@ -219,21 +219,24 @@ function applyLanguage() {
   }
   document.title = t('page.title');
   $('meta[name="description"]').content = t('page.description');
-  const toggle = $('#lang-toggle');
-  toggle.textContent = t('lang.button');
-  toggle.setAttribute('aria-label', t('lang.aria'));
-  toggle.title = t('lang.aria');
+  for (const button of document.querySelectorAll('.lang-switch button')) {
+    button.setAttribute('aria-pressed', String(button.getAttribute('data-lang') === lang));
+  }
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
   render();
   if (activeHelp) placeHelp();
 }
 
-$('#lang-toggle').addEventListener('click', () => {
-  lang = lang === 'ru' ? 'en' : 'ru';
-  try { localStorage.setItem('prikidka.lang', lang); } catch {}
-  formatInputs();
-  applyLanguage();
-});
+for (const button of document.querySelectorAll('.lang-switch button')) {
+  button.addEventListener('click', () => {
+    const next = button.getAttribute('data-lang') === 'en' ? 'en' : 'ru';
+    if (next === lang) return;
+    lang = next;
+    try { localStorage.setItem('prikidka.lang', lang); } catch {}
+    formatInputs();
+    applyLanguage();
+  });
+}
 
 for (const key of keys) {
   fields[key].addEventListener('input', () => {

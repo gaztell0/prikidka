@@ -19,15 +19,18 @@
       document.documentElement.lang = language === 'en' ? 'en' : 'ru';
     })();
   </script>
-  <link rel="stylesheet" href="./style.css?v=25bf86f873b0">
-  <script type="module" src="./app.js?v=88b1d34a9392"></script>
+  <link rel="stylesheet" href="./style.css?v=910c5bdd2d20">
+  <script type="module" src="./app.js?v=e8ad3393eae2"></script>
 </head>
 <body>
   <main class="calculator">
     <header class="toolbar">
       <h1 data-i18n="app.heading">Оценка задачи</h1>
       <div class="actions">
-        <button id="lang-toggle" class="icon-button lang-button" type="button" aria-label="Переключить на английский" title="Переключить на английский">EN</button>
+        <div class="lang-switch" role="group" aria-label="Язык интерфейса" data-i18n-aria-label="lang.group">
+          <button type="button" data-lang="ru" aria-pressed="true" aria-label="Русский" data-i18n-aria-label="lang.ru">RU</button>
+          <button type="button" data-lang="en" aria-pressed="false" aria-label="English" data-i18n-aria-label="lang.en">EN</button>
+        </div>
         <button id="reset" class="icon-button reset-button" type="button" aria-label="Сбросить оценку" title="Сбросить оценку" data-i18n-aria-label="reset.aria" data-i18n-title="reset.aria"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span class="reset-label" data-i18n="reset.label">Сбросить</span></button>
         <button id="theme-toggle" class="icon-button" type="button" aria-label="Включить тёмную тему" title="Включить тёмную тему">
           <svg id="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13.3A8.8 8.8 0 0 1 10.7 3.5a8.8 8.8 0 1 0 9.8 9.8Z"/></svg>
