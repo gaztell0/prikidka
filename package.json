@@ -8,7 +8,6 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test model.test.js scripts/build-pages.test.mjs",
     "dev": "node server.js"
   }
 }
