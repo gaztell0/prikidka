@@ -1,10 +1,13 @@
 import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
-import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=2d1a24e83c57';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=1bbb9bcbc2eb';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
 const fields = Object.fromEntries(keys.map(key => [key, $(`input[name="${key}"]`)]));
+// Only completed edits can introduce errors; empty fields stay neutral.
 const touched = new Set();
+let pendingEdit = null;
+let announcementTimer;
 let lang = document.documentElement.lang === 'en' ? 'en' : 'ru';
 const t = (key, vars) => translate(lang, key, vars);
 const formatters = new Map();
@@ -36,7 +39,7 @@ function applyTheme(theme) {
   $('#theme-toggle').title = action;
   $('#theme-moon').toggleAttribute('hidden', dark);
   $('#theme-sun').toggleAttribute('hidden', !dark);
-  $('meta[name="theme-color"]').content = dark ? '#111318' : '#f8fafc';
+  $('meta[name="theme-color"]').content = dark ? '#111318' : '#f5f7fb';
 }
 $('#theme-toggle').addEventListener('click', () => {
   themePreference = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -129,6 +132,8 @@ function syncInputs() {
   const separator = decimalSeparatorFor(lang);
   for (const key of keys) fields[key].value = state[key] === null ? '' : String(state[key]).replace('.', separator);
   touched.clear();
+  for (const key of keys) if (state[key] !== null) touched.add(key);
+  pendingEdit = null;
 }
 
 function formatInputs() {
@@ -160,48 +165,74 @@ function inputError(key, validation) {
 
 function setMetric(selector, value, sizing = {}) {
   const element = $(selector);
-  element.textContent = value?.text ?? '—';
-  element.classList.toggle('is-empty', !value);
+  element.textContent = value?.text ?? '';
   element.classList.toggle('is-wide', Boolean(sizing.wide));
   element.classList.toggle('is-long', Boolean(sizing.long));
+  element.classList.toggle('is-compact', Boolean(sizing.compact));
   element.title = value?.approximate ? t('result.title.rounded') : '';
+}
+
+function announce(message) {
+  clearTimeout(announcementTimer);
+  const note = $('#result-note');
+  if (note.textContent === message) return;
+  announcementTimer = setTimeout(() => { note.textContent = message; }, 350);
 }
 
 function render() {
   const validation = validateScenarios(state);
-  let visibleError = false;
+  const complete = keys.every(key => state[key] !== null);
+  const visibleErrors = [];
   for (const key of keys) {
-    const show = Boolean(validation.errors[key] && (touched.has(key) || fields[key].value.trim() !== ''));
+    const raw = fields[key].value.trim();
+    const reason = validation.errors[key];
+    const orderError = reason?.startsWith('order.');
+    const show = Boolean(reason && raw && touched.has(key)
+      && (!orderError || (complete && pendingEdit === null)));
     fields[key].setAttribute('aria-invalid', String(show));
-    fields[key].classList.toggle('is-long', fields[key].value.trim().length > 6);
-    $(`#${key}-error`).hidden = !show;
-    $(`#${key}-error`).textContent = show ? inputError(key, validation) : '';
-    visibleError ||= show;
+    fields[key].classList.toggle('is-long', raw.length > 6);
+    const error = $(`#${key}-error`);
+    error.hidden = !show;
+    error.querySelector('.error-description').textContent = show ? inputError(key, validation) : '';
+    if (show) visibleErrors.push(error.textContent.trim());
   }
-  $('#legacy-note').hidden = !state.legacy;
-  if (!validation.valid) {
+
+  const ready = validation.valid;
+  $('.result-values').hidden = !ready;
+  $('.result-message').hidden = ready;
+  $('#error-list').hidden = visibleErrors.length === 0;
+  $('#result-prompt').hidden = visibleErrors.length > 0;
+  if (!ready) {
     setMetric('#sp-value', null);
     setMetric('#hours-value', null);
-    $('#result-note').textContent = visibleError ? t('result.note.fix') : t('result.note.empty');
+    const missing = keys.filter(key => !fields[key].value.trim()).length;
+    let prompt;
+    if (state.legacy) prompt = t('legacy.note');
+    else if (missing === keys.length) prompt = t('result.note.empty');
+    else if (missing) {
+      const plural = new Intl.PluralRules(localeFor(lang)).select(missing);
+      prompt = t(`result.note.remaining.${plural}`, {count: missing});
+    } else prompt = t('result.note.editing');
+    $('#result-prompt').textContent = prompt;
+    $('.result-card').dataset.state = visibleErrors.length ? 'error' : missing === keys.length ? 'empty' : 'incomplete';
+    announce(visibleErrors.length ? visibleErrors.join(' ') : prompt);
     $('#hours-formula').textContent = t('result.formula.empty');
     $('#sp-formula').textContent = t('result.formula.sp.empty', {rate: HOURS_PER_SP});
     return;
   }
+
+  $('.result-card').dataset.state = 'ready';
   const result = estimate(state);
   const hours = displayed(result.hours);
   const sp = displayed(result.sp);
-  // Keep both metrics at the same size: shrink them together based on the longer value.
   const metricLength = Math.max(hours.text.length, sp.text.length);
-  const sizing = {wide: metricLength > 6, long: metricLength > 8};
+  const sizing = {wide: metricLength > 6, long: metricLength > 8, compact: sp.text.length + hours.text.length > 18};
   setMetric('#sp-value', sp, sizing);
   setMetric('#hours-value', hours, sizing);
-  $('#result-note').textContent = hours.approximate || sp.approximate ? t('result.note.rounded') : t('result.note.done');
+  const note = hours.approximate || sp.approximate ? t('result.note.rounded') : t('result.note.done');
+  announce(`${t('metric.sp')}: ${sp.text}. ${t('metric.hours')}: ${hours.text}. ${note}`);
   $('#hours-formula').textContent = t('result.formula.hours', {
-    o: fmt(state.o),
-    l: fmt(state.l),
-    p: fmt(state.p),
-    hours: hours.text,
-    unit: t('unit.hours'),
+    o: fmt(state.o), l: fmt(state.l), p: fmt(state.p), hours: hours.text, unit: t('unit.hours'),
   });
   $('#sp-formula').textContent = t('result.formula.sp', {rate: HOURS_PER_SP, sp: sp.text});
 }
@@ -210,6 +241,9 @@ function applyLanguage() {
   document.documentElement.lang = lang;
   for (const element of document.querySelectorAll('[data-i18n]')) {
     element.textContent = t(element.getAttribute('data-i18n'));
+  }
+  for (const element of document.querySelectorAll('[data-i18n-placeholder]')) {
+    element.placeholder = t(element.getAttribute('data-i18n-placeholder'));
   }
   for (const element of document.querySelectorAll('[data-i18n-aria-label]')) {
     element.setAttribute('aria-label', t(element.getAttribute('data-i18n-aria-label')));
@@ -242,10 +276,19 @@ for (const key of keys) {
   fields[key].addEventListener('input', () => {
     state[key] = parseHours(fields[key].value);
     state.legacy = false;
-    touched.add(key);
+    pendingEdit = key;
+    if (!fields[key].value.trim()) touched.delete(key);
     render();
   });
-  fields[key].addEventListener('blur', () => {touched.add(key); render();});
+  fields[key].addEventListener('blur', () => {
+    if (fields[key].value.trim()) touched.add(key);
+    else touched.delete(key);
+    pendingEdit = null;
+    render();
+  });
+}
+for (const button of document.querySelectorAll('[data-error-for]')) {
+  button.addEventListener('click', () => fields[button.dataset.errorFor].focus());
 }
 $('#reset').addEventListener('click', () => {
   closeHelp();
