@@ -1,5 +1,5 @@
 import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
-import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=1bbb9bcbc2eb';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=464ebb821031';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
