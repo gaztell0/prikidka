@@ -21,7 +21,7 @@
   </script>
   <link rel="preload" href="./fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./style.css?v=4d3c1838dbba">
-  <script type="module" src="./app.js?v=d83abd6e7b3c"></script>
+  <script type="module" src="./app.js?v=fdcb40565c6d"></script>
   <script type="module" src="./analytics.js?v=26c4df9af394"></script>
 </head>
 <body>
@@ -90,7 +90,7 @@
           </dl>
           <p data-i18n="method.scope">В каждом поле — вся реализация и ревью. Укажите от 0,01 до 100 000 ч, до двух знаков после запятой. Подходят запятая и точка. Соблюдайте порядок O ≤ M ≤ P.</p>
           <div class="method-formulas"><div><h3 data-i18n="method.hours.title">Часы = (O + 4M + P) / 6</h3><p data-i18n="method.hours.desc">У M вес 4, у остальных — по 1.</p><p id="hours-formula" class="formula">Введите три оценки для расчёта.</p></div><div><h3 data-i18n="method.sp.title">SP = часы / 8</h3><p data-i18n="method.sp.desc">Пересчёт по принятому в проекте правилу.</p><p id="sp-formula" class="formula">Результат PERT / 8</p></div></div>
-          <p data-i18n="method.note">Знак ≈ означает округление для отображения. Часы и SP считаются без промежуточного округления. Это экспертный прогноз: границы O — P не являются подтверждённым доверительным интервалом. Уточняйте оценки по фактическим трудозатратам команды.</p>
+          <p data-i18n="method.note">SP отображаются с округлением до десятых, без лишних нулей. Положительные значения меньше 0,1 SP показаны как «< 0,1 SP». Знак ≈ означает округление для отображения. Часы и SP считаются без промежуточного округления. Это экспертный прогноз: границы O — P не являются подтверждённым доверительным интервалом. Уточняйте оценки по фактическим трудозатратам команды.</p>
           <p class="sources"><span data-i18n="method.sources">Источники:</span> <a href="https://www.pmi.org/learning/library/leveraging-new-practice-standard-project-estimating-6222" target="_blank" rel="noopener noreferrer" data-i18n="source.pmi.three">PMI — трёхточечная оценка ↗</a>, <a href="https://www.pmi.org/-/media/pmi/documents/public/pdf/certifications/practice-standard-scheduling.pdf?v=c7ca2721-8c26-4e07-ba47-069d0987bc0c" target="_blank" rel="noopener noreferrer" data-i18n="source.pmi.pert">PMI — PERT, § 2.3.3 ↗</a>, <a href="https://www.gao.gov/products/gao-20-195g" target="_blank" rel="noopener noreferrer" data-i18n="source.gao">GAO — проверка оценок ↗</a>.</p>
         </div>
       </details>

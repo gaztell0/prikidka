@@ -1,5 +1,5 @@
 import {DEFAULTS, HOURS_PER_SP, MAX_HOURS, estimate, parseHours, parseState, validateScenarios} from './model.js?v=e91c7c4503ce';
-import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=464ebb821031';
+import {decimalSeparatorFor, localeFor, translate} from './i18n.js?v=ef860ae723a8';
 
 const $ = selector => document.querySelector(selector);
 const keys = ['o', 'l', 'p'];
@@ -121,11 +121,16 @@ window.addEventListener('scroll', placeHelp, true);
 window.visualViewport?.addEventListener('resize', placeHelp);
 window.visualViewport?.addEventListener('scroll', placeHelp);
 
-function displayed(value) {
-  const digits = value < 0.01 ? 6 : 2;
+function displayed(value, digits = value < 0.01 ? 6 : 2) {
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
   const approximate = Math.abs(value - rounded) > Number.EPSILON * Math.max(1, value) * 4;
   return {text: `${approximate ? '≈ ' : ''}${fmt(value, digits)}`, approximate};
+}
+
+function displayedSp(value) {
+  // Keep small positive estimates visible instead of rounding them to zero.
+  if (value > 0 && value < 0.1) return {text: `< ${fmt(0.1, 1)}`, approximate: true};
+  return displayed(value, 1);
 }
 
 function syncInputs() {
@@ -224,7 +229,7 @@ function render() {
   $('.result-card').dataset.state = 'ready';
   const result = estimate(state);
   const hours = displayed(result.hours);
-  const sp = displayed(result.sp);
+  const sp = displayedSp(result.sp);
   const metricLength = Math.max(hours.text.length, sp.text.length);
   const sizing = {wide: metricLength > 6, long: metricLength > 8, compact: sp.text.length + hours.text.length > 18};
   setMetric('#sp-value', sp, sizing);
